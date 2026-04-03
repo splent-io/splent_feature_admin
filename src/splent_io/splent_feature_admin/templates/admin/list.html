@@ -1,0 +1,101 @@
+{% extends "base_template.html" %}
+
+{% block title %}{{ model_name }} - Admin{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+        <li class="breadcrumb-item active">{{ model_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0"><b>{{ model_name }}</b></h1>
+    <a href="{{ url_for('admin.create', model_name=model_name) }}" class="btn btn-success">+ New {{ model_name }}</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+{% if records %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                {% for col in columns %}
+                <th>
+                    {{ col.name }}
+                    {% if col.primary_key %}<span class="badge bg-warning text-dark">PK</span>{% endif %}
+                    {% if col.foreign_key %}<span class="badge bg-info text-dark">FK</span>{% endif %}
+                </th>
+                {% endfor %}
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                {% for col in columns %}
+                <td>
+                    {% set val = record.__dict__.get(col.name, '') %}
+                    {% if val is none %}
+                        <span class="text-muted fst-italic">null</span>
+                    {% elif val|string|length > 80 %}
+                        {{ val|string|truncate(80) }}
+                    {% else %}
+                        {{ val }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+                <td class="text-end text-nowrap">
+                    <a href="{{ url_for('admin.edit', model_name=model_name, id=record.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{{ url_for('admin.delete', model_name=model_name, id=record.id) }}" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav aria-label="Pagination">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+            <a class="page-link" href="{{ url_for('admin.model_list', model_name=model_name, page=pagination.prev_num) }}">Previous</a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+                <li class="page-item {{ 'active' if p == pagination.page }}">
+                    <a class="page-link" href="{{ url_for('admin.model_list', model_name=model_name, page=p) }}">{{ p }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+            <a class="page-link" href="{{ url_for('admin.model_list', model_name=model_name, page=pagination.next_num) }}">Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    No records found for <strong>{{ model_name }}</strong>.
+    <a href="{{ url_for('admin.create', model_name=model_name) }}">Create the first one.</a>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base_template.html" %}
+
+{% block title %}{{ action }} {{ model_name }} - Admin{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.model_list', model_name=model_name) }}">{{ model_name }}</a></li>
+        <li class="breadcrumb-item active">{{ action }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="h2 mb-4"><b>{{ action }} {{ model_name }}</b></h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<form method="POST">
+    <div class="row">
+        {% for col in columns %}
+        <div class="col-md-6 mb-3">
+            <label for="{{ col.name }}" class="form-label fw-semibold">
+                {{ col.name }}
+                <span class="text-muted fw-normal small">({{ col.type }})</span>
+                {% if col.foreign_key %}
+                    <span class="badge bg-info text-dark">FK: {{ col.foreign_key }}</span>
+                {% endif %}
+                {% if not col.nullable %}
+                    <span class="text-danger">*</span>
+                {% endif %}
+            </label>
+
+            {% set col_type = col.type.upper().split('(')[0] %}
+            {% if col_type in ('TEXT', 'LONGTEXT', 'MEDIUMTEXT') %}
+                <textarea
+                    id="{{ col.name }}"
+                    name="{{ col.name }}"
+                    class="form-control"
+                    rows="4"
+                    {{ 'required' if not col.nullable }}
+                >{{ record[col.name] if record and record.__dict__.get(col.name) is not none else '' }}</textarea>
+            {% elif col_type == 'BOOLEAN' or col_type == 'TINYINT' %}
+                <div class="form-check form-switch mt-2">
+                    <input
+                        type="checkbox"
+                        id="{{ col.name }}"
+                        name="{{ col.name }}"
+                        value="1"
+                        class="form-check-input"
+                        {{ 'checked' if record and record.__dict__.get(col.name) }}
+                    >
+                </div>
+            {% else %}
+                <input
+                    type="{{ 'number' if col_type in ('INTEGER', 'INT', 'BIGINT', 'SMALLINT', 'FLOAT', 'DECIMAL', 'NUMERIC', 'DOUBLE') else 'text' }}"
+                    id="{{ col.name }}"
+                    name="{{ col.name }}"
+                    class="form-control"
+                    value="{{ record.__dict__.get(col.name, '') if record and record.__dict__.get(col.name) is not none else '' }}"
+                    {{ 'required' if not col.nullable }}
+                    {{ 'step=any' if col_type in ('FLOAT', 'DECIMAL', 'NUMERIC', 'DOUBLE') }}
+                >
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">
+            {{ 'Save changes' if action == 'Edit' else 'Create' }}
+        </button>
+        <a href="{{ url_for('admin.model_list', model_name=model_name) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}

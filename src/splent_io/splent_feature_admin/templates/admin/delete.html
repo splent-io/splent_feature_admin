@@ -1,0 +1,50 @@
+{% extends "base_template.html" %}
+
+{% block title %}Delete {{ model_name }} - Admin{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.model_list', model_name=model_name) }}">{{ model_name }}</a></li>
+        <li class="breadcrumb-item active">Delete</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="h2 mb-4"><b>Delete {{ model_name }}</b></h1>
+
+<div class="card border-danger shadow-sm">
+    <div class="card-body">
+        <p class="card-text mb-3">
+            You are about to permanently delete this <strong>{{ model_name }}</strong> record. This action cannot be undone.
+        </p>
+
+        <table class="table table-sm mb-4">
+            <tbody>
+                {% for col in columns %}
+                <tr>
+                    <th class="text-muted" style="width: 200px;">{{ col.name }}</th>
+                    <td>
+                        {% set val = record.__dict__.get(col.name, '') %}
+                        {% if val is none %}
+                            <span class="text-muted fst-italic">null</span>
+                        {% else %}
+                            {{ val }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <form method="POST" class="d-inline">
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+            <a href="{{ url_for('admin.model_list', model_name=model_name) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

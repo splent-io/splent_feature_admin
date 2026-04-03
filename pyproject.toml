@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=80.3.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "splent_feature_admin"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["*.tests", "*.tests.*"]
+
+[tool.splent]
+cli_version = "1.4.5"
+
+# ── Feature Contract ──────────────────────────────────────────────────────────
+# Declares what this feature provides to and requires from the product.
+[tool.splent.contract]
+description = "Auto-generated CRUD admin panel for all product models"
+env = "dev"
+
+[tool.splent.contract.provides]
+routes = ["/admin", "/admin/<model_name>", "/admin/<model_name>/create", "/admin/<model_name>/<id>", "/admin/<model_name>/<id>/delete"]
+blueprints = ["admin_bp"]
+models = []
+commands = []
+hooks = ["layout.authenticated_sidebar"]
+services = ["AdminService"]
+signals = []
+docker = []
+
+[tool.splent.contract.requires]
+features = ["auth"]
+env_vars = []
+signals = []
+
+[tool.splent.contract.extensible]
+services = ["AdminService"]
+templates = ["admin/dashboard.html", "admin/list.html", "admin/form.html", "admin/delete.html"]
+models = []
+hooks = ["layout.authenticated_sidebar"]
+routes = false
