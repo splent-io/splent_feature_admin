@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "splent_feature_admin"
-version = "1.0.1"
+version = "1.0.2"
 readme = "README.md"
 requires-python = ">=3.13"
 
@@ -27,6 +27,7 @@ cli_version = "1.4.5"
 # Do not edit manually — re-run `splent feature:contract --write` to refresh.
 [tool.splent.contract]
 description = "Auto-generated CRUD admin panel for all product models"
+env = "dev"
 
 [tool.splent.contract.provides]
 routes     = ["/admin", "/admin/<model_name>", "/admin/<model_name>/<int:id>", "/admin/<model_name>/<int:id>/delete", "/admin/<model_name>/create"]
