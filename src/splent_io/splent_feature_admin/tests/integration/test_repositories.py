@@ -30,11 +30,14 @@ def test_get_records_paginated(test_app, admin_user):
 
 def test_create_and_delete_record(test_app):
     with test_app.app_context():
-        record = AdminService.create_record(User, {
-            "email": "test_admin_crud@example.com",
-            "password": "testpass",
-            "active": "1",
-        })
+        record = AdminService.create_record(
+            User,
+            {
+                "email": "test_admin_crud@example.com",
+                "password": "testpass",
+                "active": "1",
+            },
+        )
         assert record.id is not None
         assert record.email == "test_admin_crud@example.com"
 

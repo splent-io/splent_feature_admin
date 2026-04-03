@@ -10,6 +10,24 @@ _SKIP_TYPES_IN_LIST = {"TEXT", "BLOB", "JSON", "LONGTEXT", "MEDIUMTEXT"}
 _MAX_LIST_COLUMNS = 7
 
 
+def _coerce_value(value: str, col_type: str):
+    """Coerce a form string value to the appropriate Python type."""
+    t = col_type.upper()
+    if "BOOL" in t:
+        return value in ("1", "true", "True", "on", "yes")
+    if "INT" in t:
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return value
+    if "FLOAT" in t or "DOUBLE" in t or "DECIMAL" in t or "NUMERIC" in t:
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return value
+    return value
+
+
 class AdminService:
     """Service for auto-generated CRUD operations on all registered models."""
 
@@ -37,13 +55,15 @@ class AdminService:
             fk = None
             if col.foreign_keys:
                 fk = str(list(col.foreign_keys)[0].target_fullname)
-            cols.append({
-                "name": col.name,
-                "type": str(col.type),
-                "primary_key": col.primary_key,
-                "nullable": col.nullable,
-                "foreign_key": fk,
-            })
+            cols.append(
+                {
+                    "name": col.name,
+                    "type": str(col.type),
+                    "primary_key": col.primary_key,
+                    "nullable": col.nullable,
+                    "foreign_key": fk,
+                }
+            )
         return cols
 
     @staticmethod
@@ -51,7 +71,8 @@ class AdminService:
         """Return columns suitable for the list view (filtered and capped)."""
         cols = AdminService.get_columns(model)
         filtered = [
-            c for c in cols
+            c
+            for c in cols
             if c["type"].upper().split("(")[0] not in _SKIP_TYPES_IN_LIST
         ]
         return filtered[:_MAX_LIST_COLUMNS]
@@ -81,8 +102,10 @@ class AdminService:
     @staticmethod
     def create_record(model: type, form_data: dict):
         """Create a new record from form data."""
+        columns = AdminService.get_columns(model)
         editable = {c["name"] for c in AdminService.get_editable_columns(model)}
-        nullable = {c["name"] for c in AdminService.get_columns(model) if c["nullable"]}
+        nullable = {c["name"] for c in columns if c["nullable"]}
+        type_map = {c["name"]: c["type"] for c in columns}
 
         data = {}
         for key, value in form_data.items():
@@ -90,7 +113,7 @@ class AdminService:
                 if value == "" and key in nullable:
                     data[key] = None
                 else:
-                    data[key] = value
+                    data[key] = _coerce_value(value, type_map.get(key, ""))
 
         record = model(**data)
         db.session.add(record)
@@ -100,15 +123,17 @@ class AdminService:
     @staticmethod
     def update_record(record, form_data: dict, model: type):
         """Update an existing record from form data."""
+        columns = AdminService.get_columns(model)
         editable = {c["name"] for c in AdminService.get_editable_columns(model)}
-        nullable = {c["name"] for c in AdminService.get_columns(model) if c["nullable"]}
+        nullable = {c["name"] for c in columns if c["nullable"]}
+        type_map = {c["name"]: c["type"] for c in columns}
 
         for key, value in form_data.items():
             if key in editable:
                 if value == "" and key in nullable:
                     setattr(record, key, None)
                 else:
-                    setattr(record, key, value)
+                    setattr(record, key, _coerce_value(value, type_map.get(key, "")))
 
         db.session.commit()
 

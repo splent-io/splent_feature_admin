@@ -11,11 +11,13 @@ def dashboard():
     models = AdminService.get_models()
     model_stats = []
     for name, cls in sorted(models.items()):
-        model_stats.append({
-            "name": name,
-            "count": AdminService.count_records(cls),
-            "columns": len(AdminService.get_columns(cls)),
-        })
+        model_stats.append(
+            {
+                "name": name,
+                "count": AdminService.count_records(cls),
+                "columns": len(AdminService.get_columns(cls)),
+            }
+        )
     return render_template("admin/dashboard.html", models=model_stats)
 
 
