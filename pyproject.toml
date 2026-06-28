@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "splent_feature_admin"
-version = "1.0.2"
+version = "1.1.0"
 readme = "README.md"
 requires-python = ">=3.13"
 
@@ -34,7 +34,7 @@ routes     = ["/admin", "/admin/<model_name>", "/admin/<model_name>/<int:id>", "
 blueprints = []
 models     = []
 commands   = []
-hooks      = ["layout.authenticated_sidebar"]
+hooks      = ["layout.authenticated_sidebar", "layout.body_start"]
 services   = []
 signals    = []
 translations = []
@@ -49,5 +49,5 @@ signals  = []
 services  = []
 templates = ["admin/dashboard.html", "admin/delete.html", "admin/form.html", "admin/list.html"]
 models    = []
-hooks     = ["layout.authenticated_sidebar"]
+hooks     = ["layout.authenticated_sidebar", "layout.body_start"]
 routes    = false

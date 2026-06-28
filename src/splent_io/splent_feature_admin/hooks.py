@@ -47,8 +47,7 @@ def admin_bar():
         return ""
     email = escape(getattr(current_user, "email", None) or "Account")
     return (
-        _ADMIN_BAR_CSS
-        + '<div id="sp-adminbar">'
+        _ADMIN_BAR_CSS + '<div id="sp-adminbar">'
         f'<a class="sp-adminbar__brand" href="{url_for("admin.dashboard")}">&#9881; Dashboard</a>'
         '<a href="/">View site</a>'
         '<span class="sp-adminbar__spacer"></span>'
