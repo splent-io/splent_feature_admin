@@ -1,12 +1,18 @@
 from flask import flash, render_template, redirect, url_for, request
-from flask_login import login_required
+
+from splent_framework.decorators.decorators import role_required
 
 from splent_io.splent_feature_admin import admin_bp
 from splent_io.splent_feature_admin.services import AdminService
 
+# The generic CRUD reaches every model in the product, so it is the most
+# privileged screen there is. The auth migration backfills pre-existing
+# accounts to admin, so products that upgrade keep the access they had.
+ADMIN_ROLES = ("admin",)
+
 
 @admin_bp.route("/admin", methods=["GET"])
-@login_required
+@role_required(*ADMIN_ROLES)
 def dashboard():
     models = AdminService.get_models()
     model_stats = []
@@ -22,7 +28,7 @@ def dashboard():
 
 
 @admin_bp.route("/admin/<model_name>", methods=["GET"])
-@login_required
+@role_required(*ADMIN_ROLES)
 def model_list(model_name):
     model = AdminService.get_model(model_name)
     if model is None:
@@ -43,7 +49,7 @@ def model_list(model_name):
 
 
 @admin_bp.route("/admin/<model_name>/create", methods=["GET", "POST"])
-@login_required
+@role_required(*ADMIN_ROLES)
 def create(model_name):
     model = AdminService.get_model(model_name)
     if model is None:
@@ -67,7 +73,7 @@ def create(model_name):
 
 
 @admin_bp.route("/admin/<model_name>/<int:id>", methods=["GET", "POST"])
-@login_required
+@role_required(*ADMIN_ROLES)
 def edit(model_name, id):
     model = AdminService.get_model(model_name)
     if model is None:
@@ -79,7 +85,7 @@ def edit(model_name, id):
         flash(f"{model_name} with id {id} not found.", "danger")
         return redirect(url_for("admin.model_list", model_name=model_name))
 
-    columns = AdminService.get_editable_columns(model)
+    columns = AdminService.get_editable_columns(model, for_update=True)
 
     if request.method == "POST":
         AdminService.update_record(record, request.form.to_dict(), model)
@@ -96,7 +102,7 @@ def edit(model_name, id):
 
 
 @admin_bp.route("/admin/<model_name>/<int:id>/delete", methods=["GET", "POST"])
-@login_required
+@role_required(*ADMIN_ROLES)
 def delete(model_name, id):
     model = AdminService.get_model(model_name)
     if model is None:

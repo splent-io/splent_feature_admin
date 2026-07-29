@@ -9,6 +9,34 @@ _SKIP_TYPES_IN_LIST = {"TEXT", "BLOB", "JSON", "LONGTEXT", "MEDIUMTEXT"}
 # Maximum columns shown in the list view
 _MAX_LIST_COLUMNS = 7
 
+# Columns this generic CRUD must never write, keyed by model name. They
+# decide who may read what, so editing them here would route around the very
+# gates that protect them: role grants privileges (use "splent feature:auth
+# set-role"), and media's access/owner_feature/owner_ref/filename/url pick
+# which resolver judges a protected file and which bytes get sent.
+_PROTECTED_COLUMNS = {
+    "User": {"role"},
+    "MediaItem": {"access", "owner_feature", "owner_ref", "filename", "url"},
+}
+
+# Columns writable on create but not on update. The User constructor hashes
+# a password it receives, but a plain setattr on an existing record would
+# store it in clear and lock the account out of login.
+_CREATE_ONLY_COLUMNS = {
+    "User": {"password"},
+}
+
+
+def _model_name(model: type) -> str:
+    return getattr(model, "__name__", "") or ""
+
+
+def _protected_columns(model: type, for_update: bool = False) -> set[str]:
+    protected = set(_PROTECTED_COLUMNS.get(_model_name(model), set()))
+    if for_update:
+        protected |= _CREATE_ONLY_COLUMNS.get(_model_name(model), set())
+    return protected
+
 
 def _coerce_value(value: str, col_type: str):
     """Coerce a form string value to the appropriate Python type."""
@@ -78,9 +106,19 @@ class AdminService:
         return filtered[:_MAX_LIST_COLUMNS]
 
     @staticmethod
-    def get_editable_columns(model: type) -> list[dict]:
-        """Return columns that can be edited (excludes primary keys)."""
-        return [c for c in AdminService.get_columns(model) if not c["primary_key"]]
+    def get_editable_columns(model: type, for_update: bool = False) -> list[dict]:
+        """Return columns that can be edited.
+
+        Excludes primary keys and the security-relevant columns listed in
+        _PROTECTED_COLUMNS. create_record and update_record filter against
+        this same set, so a hand-crafted POST cannot reach them either.
+        """
+        protected = _protected_columns(model, for_update=for_update)
+        return [
+            c
+            for c in AdminService.get_columns(model)
+            if not c["primary_key"] and c["name"] not in protected
+        ]
 
     # ── CRUD operations ──────────────────────────────────────────────────
 
@@ -124,7 +162,9 @@ class AdminService:
     def update_record(record, form_data: dict, model: type):
         """Update an existing record from form data."""
         columns = AdminService.get_columns(model)
-        editable = {c["name"] for c in AdminService.get_editable_columns(model)}
+        editable = {
+            c["name"] for c in AdminService.get_editable_columns(model, for_update=True)
+        }
         nullable = {c["name"] for c in columns if c["nullable"]}
         type_map = {c["name"]: c["type"] for c in columns}
 
