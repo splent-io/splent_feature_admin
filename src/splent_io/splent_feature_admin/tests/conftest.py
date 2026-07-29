@@ -20,7 +20,7 @@ def admin_user(test_app):
             db.session.delete(existing)
             db.session.commit()
 
-        user = User(email="admin@admin.com", active=True)
+        user = User(email="admin@admin.com", active=True, role="admin")
         user.set_password("admin")
         db.session.add(user)
         db.session.commit()
