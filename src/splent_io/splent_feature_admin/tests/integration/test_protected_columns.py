@@ -8,9 +8,10 @@ would re-point a restricted file at a permissive resolver while keeping the
 unreleased bytes.
 """
 
+import pytest
+
 from splent_io.splent_feature_admin.services import AdminService
 from splent_io.splent_feature_auth.models import User
-from splent_io.splent_feature_media.models import MediaItem
 from splent_framework.db import db
 
 
@@ -45,6 +46,13 @@ def test_update_cannot_escalate_role(test_app):
 
 
 def test_update_cannot_repoint_a_restricted_media_item(test_app):
+    # The deny list keys on model names, so this feature does not import
+    # media and a product may perfectly well install one without the other.
+    # The test skips rather than inventing a dependency the code does not
+    # have.
+    models = pytest.importorskip("splent_io.splent_feature_media.models")
+    MediaItem = models.MediaItem
+
     with test_app.app_context():
         item = MediaItem(
             filename="exam.pdf",
