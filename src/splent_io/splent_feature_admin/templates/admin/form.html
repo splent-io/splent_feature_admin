@@ -28,6 +28,7 @@
 {% endwith %}
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="row">
         {% for col in columns %}
         <div class="col-md-6 mb-3">

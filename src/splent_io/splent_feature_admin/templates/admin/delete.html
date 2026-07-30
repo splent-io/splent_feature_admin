@@ -41,6 +41,7 @@
         </table>
 
         <form method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-danger">Confirm Delete</button>
             <a href="{{ url_for('admin.model_list', model_name=model_name) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
         </form>
